@@ -93,6 +93,7 @@ CREATE OR REPLACE TABLE  purushotham.PUBLIC.ORDERS (
      type=csv,
      field_delimiter=',',
      skip_header=1;
+     
 
     desc file format my_file_frmt
     

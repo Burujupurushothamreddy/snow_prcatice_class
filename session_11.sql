@@ -2,7 +2,7 @@ use database bank;
 use schema hdfc;
 create or replace stage bank.hdfc.aws_stage
 url='s3://bucketsnowflakes3'
-list @bank.hdfc.aws_stage
+list @bank.hdfc.aws_stage;
 
 CREATE OR REPLACE TABLE bank.hdfc.ORDERS (
     ORDER_ID VARCHAR(30),
