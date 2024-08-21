@@ -1,0 +1,88 @@
+create or replace transient database streams_db;
+
+create or replace table raw_sales_src(
+id varchar,
+product varchar,
+price varchar,
+amount varchar,
+store_id varchar);
+
+select * from raw_sales_src;
+
+insert into raw_sales_src values (1,'apple',1.90,1,1),
+                                (2,'Lemon',0.99,1,1),
+                                 (3,'Apple',1.79,1,2),
+                                (4,'Orange Juice',1.89,1,2),
+                                (5,'Cereals',5.98,2,1);
+
+insert into raw_sales_src values (6,'tamota',1.90,1,1),
+                                (7,'potato',0.99,1,1);
+
+insert into raw_sales_src values (8,'graphs',1.90,1,1),
+                                (9,'onion',0.99,1,1);
+
+                                
+create or replace table raw_store(
+store_id varchar,
+location varchar,
+employees varchar);
+
+select * from raw_store;
+
+INSERT INTO raw_store VALUES(1,'Chicago',33);
+INSERT INTO raw_store VALUES(2,'London',12);
+
+create or replace table sales_target(
+id int,
+product varchar,
+price number,
+amount int,
+store_id int,
+store1_id int,
+location varchar,
+employees number)
+
+select * from sales_target;
+
+insert into sales_target
+select 
+a.id,
+a.product,
+a.price,
+a.amount,
+a.store_id,
+b.store_id,
+b.location,
+b.employees from streams_insert  a join  raw_store b on a.store_id=b.store_id
+
+create or replace stream streams_insert on table raw_sales_src;
+
+show streams;
+
+desc stream streams_insert;
+
+select * from streams_insert;
+
+create or replace task sales_insert
+warehouse=compute_wh
+schedule='using cron  * * * * * utc'
+as
+insert into sales_target
+select 
+a.id,
+a.product,
+a.price,
+a.amount,
+a.store_id,
+b.store_id,
+b.location,
+b.employees from streams_insert a join  raw_store b on a.store_id=b.store_id
+
+alter task sales_insert resume;
+
+show tasks;
+
+select * from sales_target;
+
+select * from streams_insert;
+

@@ -1,0 +1,201 @@
+create or replace transient database task_db;
+
+create schema andhra
+
+create or replace table customer(
+eid int autoincrement start=1 increment=1,
+ename varchar(40) default 'bpr',
+create_date timestamp
+)
+
+desc table customer;
+
+select * from customer;
+
+
+delete from customer;
+
+insert into customer(create_date) values(current_timestamp);
+
+create or replace task customer_insert
+warehouse=compute_wh
+schedule='1 minute'
+as
+insert into customer(create_date) values(current_timestamp);
+
+show tasks;
+
+alter task customer_insert resume;
+
+// i want insert every 60 minute my task
+create or replace task customer_insert
+warehouse=compute_wh
+schedule='60 minute'
+as
+insert into customer(create_date) values(current_timestamp);
+--------------------------------------------------------------------
+cron
+create or replace table customer1(
+eid int autoincrement start=1 increment=1,
+ename varchar(40) default 'bpr',
+create_date timestamp
+)
+
+select * from customer1
+
+//every minute run my task by using cron
+create or replace task customer_insert1
+warehouse=compute_wh
+schedule='using cron * * * * * utc'
+as
+insert into customer1(create_date) values(current_timestamp);
+
+alter task customer_insert1 resume;
+
+select * from customer1;
+
+CREATE OR REPLACE TASK CUSTOMER_INSERT
+    WAREHOUSE = COMPUTE_WH
+    SCHEDULE = 'USING CRON 0 7,10 * * 5L UTC'
+    AS 
+    INSERT INTO CUSTOMERS(CREATE_DATE) VALUES(CURRENT_TIMESTAMP);
+    
+
+# __________ minute (0-59)
+# | ________ hour (0-23)
+# | | ______ day of month (1-31, or L)
+# | | | ____ month (1-12, JAN-DEC)
+# | | | | __ day of week (0-6, SUN-SAT, or L)
+# | | | | |
+# | | | | |
+# * * * * *
+
+
+
+
+// Every minute
+SCHEDULE = 'USING CRON * * * * * UTC'
+
+
+// Every day at 6am UTC timezone
+SCHEDULE = 'USING CRON 0 6 * * * UTC'
+
+// Every hour starting at 9 AM and ending at 5 PM on Sundays 
+SCHEDULE = 'USING CRON 0 9-17 * * SUN America/Los_Angeles'
+
+
+CREATE OR REPLACE TASK CUSTOMER_INSERT
+    WAREHOUSE = COMPUTE_WH
+    SCHEDULE = 'USING CRON 0 9,17 * * * UTC'
+    AS 
+    INSERT INTO CUSTOMERS(CREATE_DATE) VALUES(CURRENT_TIMESTAMP);
+  
+  -----------------------------
+  ---------------------------------
+  show tables;
+  
+create or replace table customer(
+eid int autoincrement start=1 increment=1,
+ename varchar(40) default 'bpr',
+create_date timestamp
+)
+
+
+create or replace task customer_in
+warehouse=compute_wh
+schedule='1 minute'
+as
+insert into customer(create_date) values(current_timestamp);
+
+
+create or replace table customer2(
+eid int,
+ename varchar(40),
+create_date date
+)
+
+CREATE OR REPLACE TASK CUSTOMER_INSERT_v1
+    WAREHOUSE = COMPUTE_WH
+    after CUSTOMER_in
+    as
+    insert into customer2  select * from customer
+
+    alter task CUSTOMER_insert suspend;
+
+     alter task CUSTOMER_INSERT1 suspend;
+
+    show tasks;
+
+    
+create or replace table customer3(
+eid int,
+ename varchar(40),
+create_date date,
+INSERT_DATE DATE DEFAULT DATE(CURRENT_TIMESTAMP)) 
+
+CREATE OR REPLACE TASK CUSTOMER_INSERT_v2
+    WAREHOUSE =compute_wh
+    after CUSTOMER_INSERT_v1
+    as
+    insert into customer3(eid,ename,create_date)  select * from customer2   
+
+show tasks;
+
+alter task CUSTOMER_in resume;
+alter task CUSTOMER_insert_v1 resume;
+alter task CUSTOMER_insert_v2 resume;
+
+select * from customer; 
+select * from customer2; 
+select * from customer3; 
+
+insert into customer values(1,'bpr', current_timestamp )
+
+alter task CUSTOMER_in suspend;
+alter task CUSTOMER_insert_v1 suspend;
+alter task CUSTOMER_insert_v2 suspend;
+
+delete from customer; 
+delete from customer2; 
+delete from customer3; 
+
+_______________________________________________________
+create or replace table abc(
+id int,
+name varchar2(20),
+addr varchar(20),
+create_date timestamp)
+
+select * from abc;
+
+insert into abc(id,name,addr,create_date) values (1,'bpr','bang',current_timestamp)
+
+create or replace task abc_insert
+warehouse= compute_wh
+schedule='2 minute'
+as
+insert into abc(id,name,addr,create_date) values (1,'bpr','bang',current_timestamp)
+
+create or replace task abc_delete
+warehouse= compute_wh
+schedule='30 minute'
+as
+delete from abc
+
+show tasks;
+
+alter task abc_insert resume;
+alter task abc_delete resume;
+
+select * from abc;
+select * from abc_copy;
+
+create or replace table task_db.andhra.abc_copy
+clone task_db.andhra.abc
+
+delete from abc_copy;
+
+alter task abc_insert suspend;
+alter task abc_delete suspend;
+
+alter task CUSTOMER_in suspend;
