@@ -1,0 +1,174 @@
+--Assignment;
+
+--normal_view--
+---------------------------------------------------------------------------------------
+create or replace database demo_db; 
+
+use demo_db;
+
+select * from employees;
+
+
+
+select * from dependents;
+
+create or replace view employees_view as(
+select p.employee_id, p.first_name, p.email, p.salary, p.department_id, b.dependent_id,b.last_name,
+b.relationship from employees p inner join dependents b on p.employee_id=b.employee_id);
+
+select * from employees_view;
+
+delete from employees_view;
+
+drop view employees_view;
+
+show views;
+
+
+update employees set salary=10000 where first_name='Alexander' and last_name='Khoo'; 
+
+select * from employees where first_name='Alexander' and last_name='Khoo';
+
+create or replace view employee1_view as(
+select department_id, max(salary) as "max_salary" from employees group by department_id);
+
+create or replace view employee2_view as(
+select employee_id, first_name, salary from employees);
+
+select * from employee2_view;
+
+--secure view
+-------------------------------------------------------------------------------------
+
+create or replace role view_full;
+
+create or replace role view_masked;
+
+grant usage on database demo_db to role view_full; 
+
+grant usage on database demo_db to role view_masked; 
+
+grant usage on schema demo_db.public to role view_full; 
+
+grant usage on schema demo_db.public to role view_masked;
+
+grant usage on warehouse compute_wh to role view_full;
+
+grant usage on warehouse compute_wh to role view_masked;
+
+grant select on table demo_db.public.employees to role view_full;
+
+grant select on table demo_db.public.employees to role view_masked;
+
+grant select on view demo_db.public.sec_view to role view_full;
+
+grant select on view demo_db.public.sec_view to role view_masked;
+
+show roles;
+
+
+GRANT ROLE VIEW_MASKED TO USER PURUSHOTHAMREDDY;
+GRANT ROLE VIEW_FULL TO USER PURUSHOTHAMREDDY;
+
+select current_user();
+
+create or replace secure view sec_view as(
+select employee_id, first_name, relationship from dependents) 
+
+show views;
+
+use role view_full;
+select * from sec_view;
+
+use role view_masked;
+select * from sec_view;
+
+use role public;
+select * from sec_view;
+
+--Materilazied view
+___________________________________________________________________________
+ALTER SESSION SET USE_CACHED_RESULT=FALSE; -- disable global caching
+ALTER warehouse compute_wh suspend;
+ALTER warehouse compute_wh resume;
+
+
+
+-- Prepare table
+CREATE OR REPLACE TRANSIENT DATABASE ORDERS;
+
+CREATE OR REPLACE SCHEMA TPCH_SF100;
+
+CREATE OR REPLACE TABle demo_db.public.ORDERS AS
+SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.ORDERS;
+
+SELECT * FROM ORDERS LIMIT 100
+
+
+
+-- Example statement view -- 
+SELECT
+YEAR(O_ORDERDATE) AS YEAR,
+MAX(O_COMMENT) AS MAX_COMMENT,
+MIN(O_COMMENT) AS MIN_COMMENT,
+MAX(O_CLERK) AS MAX_CLERK,
+MIN(O_CLERK) AS MIN_CLERK
+FROM demo_db.public.ORDERS
+GROUP BY YEAR(O_ORDERDATE)
+ORDER BY YEAR(O_ORDERDATE);
+
+
+
+
+-- Create materialized view
+CREATE OR REPLACE MATERIALIZED VIEW ORDERS_MV
+AS 
+SELECT
+YEAR(O_ORDERDATE) AS YEAR,
+MAX(O_COMMENT) AS MAX_COMMENT,
+MIN(O_COMMENT) AS MIN_COMMENT,
+MAX(O_CLERK) AS MAX_CLERK,
+MIN(O_CLERK) AS MIN_CLERK
+FROM demo_db.public.ORDERS
+GROUP BY YEAR(O_ORDERDATE);
+
+show views ;
+SHOW MATERIALIZED VIEWS;
+
+-- Query view
+SELECT * FROM ORDERS_MV
+ORDER BY YEAR;
+
+
+
+-- UPDATE or DELETE values
+UPDATE ORDERS
+SET O_CLERK='Clerk#99900000' 
+WHERE O_ORDERDATE='1992-01-01'
+
+
+
+
+
+   -- Test updated data --
+-- Example statement view -- 
+SELECT
+YEAR(O_ORDERDATE) AS YEAR,
+MAX(O_COMMENT) AS MAX_COMMENT,
+MIN(O_COMMENT) AS MIN_COMMENT,
+MAX(O_CLERK) AS MAX_CLERK,
+MIN(O_CLERK) AS MIN_CLERK
+FROM demo_db.public.ORDERS
+GROUP BY YEAR(O_ORDERDATE)
+ORDER BY YEAR(O_ORDERDATE);
+
+
+
+-- Query view
+SELECT * FROM ORDERS_MV
+ORDER BY YEAR;
+
+
+SHOW MATERIALIZED VIEWS;
+
+

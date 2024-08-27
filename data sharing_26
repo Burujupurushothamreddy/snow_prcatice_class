@@ -1,0 +1,93 @@
+
+     ------data sharing-------
+
+
+--producer sql queries
+
+1) create or replace database data_share;
+
+create or replace stage aws_stage
+ url='s3://bucketsnowflakes3';
+
+ list @aws_stage;
+
+ CREATE OR REPLACE TABLE ORDERS (
+ORDER_ID	VARCHAR(30)
+,AMOUNT	NUMBER(38,0)
+,PROFIT	NUMBER(38,0)
+,QUANTITY	NUMBER(38,0)
+,CATEGORY	VARCHAR(30)
+,SUBCATEGORY	VARCHAR(30)) 
+
+copy into orders
+from @aws_stage
+file_format=(type=csv field_delimiter=',' skip_header=1)
+files=('OrderDetails.csv')
+
+select * from orders;
+
+create or replace share orders_share;
+
+grant usage on database data_share to share orders_share;
+
+grant usage on schema data_share.public to share orders_share;
+
+grant select on table data_share.public.orders to share orders_share;
+
+SHOW GRANTS TO SHARE ORDERS_SHARE;
+
+alter SHARE ORDERS_SHARE ADD ACCOUNT= LPAIKTZ.RJ64823; 
+---------------------------------------------------------------------------------
+2) create or replace database data_share1;
+
+create or replace stage aws_stage_1
+ url='s3://bucketsnowflakes3';
+
+ list @aws_stage_1
+
+CREATE OR REPLACE TABLE ORDERS1 (
+ORDER_ID	VARCHAR(30)
+,AMOUNT	NUMBER(38,0)
+,PROFIT	NUMBER(38,0)
+,QUANTITY	NUMBER(38,0)
+,CATEGORY	VARCHAR(30)
+,SUBCATEGORY	VARCHAR(30)) 
+
+ copy into ORDERS1 from @aws_stage_1
+ file_format=(type=csv field_delimiter=',' skip_header=1)
+ pattern='.*Order.*'
+
+ select * from orders1
+
+ create or replace share orders1_share;
+
+ grant usage on database data_share1 to share orders1_share;
+
+  grant usage on schema data_share1.public to share orders1_share;
+
+  grant select on table data_share1.public.orders1 to share orders1_share;
+
+  show grants to share orders1_share;
+
+  alter share orders1_share add account=LPAIKTZ.RJ64823;
+
+
+  ----consumer sql queries
+  show shares;
+
+1) describe share WJGVVPK.VD07731.orders_share;
+
+   create or replace database orders_share_db from share WJGVVPK.VD07731.orders_share;
+
+   select * from ORDERS_SHARE_DB.PUBLIC.ORDERS;
+
+   delete from ORDERS_SHARE_DB.PUBLIC.ORDERS
+
+
+   show shares;
+
+   desc share WJGVVPK.VD07731.orders1_share;
+
+   create or replace database data_sharing_db_1 from share WJGVVPK.VD07731.orders1_share;
+
+   select * from DATA_SHARING_DB_1.PUBLIC.ORDERS1;
