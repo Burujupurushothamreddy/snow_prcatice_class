@@ -1,0 +1,324 @@
+---------scaler function---------------
+
+create or replace database snow_db;
+
+select sysdate();
+
+select substr(sysdate(),1,10);
+
+create or replace function my_fun(business_date timestamp)
+returns date
+language sql
+as
+$$
+ to_date(substr(to_char(business_date),1,10))
+$$
+;
+
+select sysdate();
+
+select my_fun('2024-08-28 10:04:25.131');
+
+create or replace function my_fun1 (a int,b int)
+returns int
+language sql
+as
+$$
+  a+b
+$$
+;
+
+select my_fun1(16,5)
+
+create or replace function get_time (business_time timestamp)
+returns string
+language sql
+as
+$$
+substr(to_char(business_time),11,15)
+ $$
+ ;
+
+ select get_time('2024-08-28 10:16:02.446') 
+
+ CREATE OR REPLACE TABLE SALES(
+   sale_datetime TIMESTAMP,
+   sale_amount NUMBER(19,4)
+);
+
+
+
+INSERT INTO SALES VALUES
+('2023-01-01 12:53:22.000','2876.93'),
+('2023-01-02 01:14:55.000','3509.75'),
+('2023-01-03 01:05:12.000','2971.66'),
+('2023-01-04 12:47:49.000','3328.32');
+
+select * from SALES;
+
+select my_fun(sale_datetime),  sale_amount from sales;
+
+select get_time(sale_datetime),  sale_amount from sales;
+
+------------------table function --------------------------
+CREATE OR REPLACE TABLE sales_by_country(
+year NUMBER(4),
+country VARCHAR(50),
+sale_amount NUMBER
+);
+
+
+
+INSERT INTO SALES_BY_COUNTRY VALUES
+('2022','US','90000'),
+('2022','UK','75000'),
+('2022','FR','55000'),
+('2023','US','100000'),
+('2023','UK','80000'),
+('2023','FR','70000');
+
+
+CREATE OR REPLACE TABLE currency(
+country VARCHAR(50),
+currency VARCHAR(3)
+);	
+
+
+INSERT INTO CURRENCY VALUES
+('US','USD'),
+('UK','GBP'),
+('FR','EUR');
+
+select * from SALES_BY_COUNTRY;
+
+CREATE OR REPLACE FUNCTION get_sales(country_name VARCHAR)
+RETURNS TABLE (year NUMBER, sale_amount NUMBER, country VARCHAR)
+AS
+$$
+SELECT year, sale_amount, country
+FROM sales_by_country
+WHERE country = country_name
+$$
+;
+
+SELECT * FROM TABLE(get_sales('US'));
+
+SELECT * FROM TABLE(get_sales_max_amount('US'));
+
+SELECT   country,max(sale_amount) as maxsales
+FROM sales_by_country
+WHERE country = 'US'
+group by country
+
+
+CREATE OR REPLACE FUNCTION get_sales_max_amount(country_name VARCHAR)
+RETURNS TABLE ( sale_max_amount NUMBER, country VARCHAR)
+AS
+$$
+SELECT max(sale_amount) as sale_max_amount, country
+FROM sales_by_country
+WHERE country = country_name
+group by country
+$$
+;
+
+__________stored procedure------
+
+create or replace table snow_db.public.emp as (
+select * from DEMO_DB.PUBLIC.EMPLOYEES)
+
+
+
+select * from emp;
+
+delete from emp where salary < = 5000
+
+CREATE OR REPLACE PROCEDURE bpr_emp()
+RETURNS VARCHAR
+LANGUAGE SQL
+AS
+$$
+DECLARE
+message VARCHAR;
+BEGIN
+DELETE FROM emp WHERE salary <= 5000;
+message := 'below 5000 employees data deleted successfully';
+RETURN message;
+END;
+$$
+;
+
+
+call bpr_emp();
+
+
+
+
+CREATE OR REPLACE PROCEDURE purge_emp_data(sal int)
+RETURNS VARCHAR
+LANGUAGE SQL
+AS
+$$
+DECLARE
+message VARCHAR;
+BEGIN
+DELETE FROM emp WHERE salary <=:sal;
+message := 'below'||:sal||'employees data deleted successfully';
+RETURN message;
+END;
+$$
+;
+
+call purge_emp_data(7000);
+
+-------------task---------------
+
+1) create or replace table customer (
+   cid number,
+   cname varchar,
+   amount number,
+   address varchar,
+   phone varchar);
+
+select * from customer;
+
+CREATE OR REPLACE PROCEDURE insert_customer(cid number,cname varchar,amount number,address varchar,phone varchar)
+RETURNS VARCHAR
+LANGUAGE SQL
+AS
+$$
+DECLARE
+message VARCHAR;
+BEGIN
+insert into customer (cid,cname,amount,address,phone) values (:cid,:cname,:amount,:address,:phone);
+message := 'customer data inserted sucessfully';
+RETURN message;
+END;
+$$
+;
+
+call insert_customer(101,'purushotham',20000,'bangalore',7093252952);
+call insert_customer(102,'ravi',10000,'kolkatha',9652332979);
+call insert_customer(103,'raja',30000,'hyd',7893252952);
+call insert_customer(104,'gaja',40000,'mum',9000853702);
+call insert_customer(105,'naga',50000,'che',0987654321);
+
+--------procuder for with draw logic (acno ,1000)---
+
+select * from customer;
+
+select count(*) from customer where cid=103;
+
+update customer set amount=amount+1000 where cid=103;
+
+
+create or replace procedure withdraw_customer_data(amount number, cid number)
+returns string
+language sql
+as
+$$
+DECLARE
+account_exists number;
+BEGIN
+select count(*) into account_exists
+from customer
+where cid=:cid;
+
+if(account_exists=1) then
+update customer set amount=amount-:amount 
+where cid= :cid;
+return 'cid '||:cid||' and '||:amount|| 'withdraw sucessful';
+else
+return 'cid'||:cid|| 'does not exist, please try with different one';
+end if;
+end;
+$$;
+
+call withdraw_customer_data(50000,106);
+
+--------procuder for with depo logic (acno ,1000)---
+
+
+select * from customer;
+
+select count(*) from customer where cid=104;
+
+update customer set amount=amount+10000 where cid=103;
+
+create or replace procedure deposite_customer_data(amount number, cid number)
+returns string
+language sql
+as
+$$
+DECLARE
+account_exists number;
+BEGIN
+select count(*) into account_exists
+from customer
+where cid=:cid;
+
+if(account_exists=1) then
+update customer set amount=amount+:amount 
+where cid= :cid;
+return 'cid '||:cid||' and '||:amount|| 'deposite sucessful';
+else
+return 'cid'||:cid|| 'does not exist, please try with different one';
+end if;
+end;
+$$;
+
+call deposite_customer_data(50000,106);
+
+select * from customer;
+
+-------procedure to display customers based on branch/address (blr)--------
+
+select * from customer where address='bangalore';
+
+
+create or replace procedure get_customer_info(address varchar)
+returns table (cid number,cname varchar,amount number,address varchar,phone varchar)
+language sql
+as
+$$
+declare
+   res resultset;
+begin
+ res:=(select cid,cname,amount,address,phone
+       from customer
+       where address=:address);;
+return table(res);
+end;
+$$;
+
+call get_customer_info('bangalore');
+
+---------write a procedure to delete customer is inactive  (accno)------
+CREATE or replace  TABLE customer_store (
+    eid  number,        
+    ename VARCHAR, 
+    addr VARCHAR,        
+    amount number,      
+    status varchar);
+
+    select * from customer_store;
+
+     select count(*) from customer_store where status='inactive';
+
+CREATE OR REPLACE PROCEDURE delete_inactive_customer_store(status varchar)
+RETURNS VARCHAR
+LANGUAGE SQL
+AS
+$$
+DECLARE
+message VARCHAR;
+BEGIN
+DELETE FROM customer_store  WHERE status=:status;
+message := 'inactive customer_store data deleted successfully';
+RETURN message;
+END;
+$$
+;
+
+call delete_inactive_customer_store('inactive');
+

@@ -1,0 +1,258 @@
+create or replace database vitech_dev_db;
+
+create or replace schema vitech_oms_brozne_data;
+
+create or replace schema vitech_oms_silver_data;
+
+create or replace schema vitech_oms_gold_data;
+
+CREATE or replace TABLE Supplier (
+    SupplierID INT PRIMARY KEY,
+    SupplierName VARCHAR(100) NOT NULL,
+    ContactPerson VARCHAR(100),
+    Email VARCHAR(200),
+    Phone VARCHAR(50),
+    Address VARCHAR(50),
+    City VARCHAR(50),
+    State VARCHAR(10),
+    ZipCode VARCHAR(10),
+    Updated_at string, 
+    orders_OrderID INT
+);
+
+CREATE or replace TABLE Orders (
+    OrderID INT PRIMARY KEY,
+    OrderDate timestamp NOT NULL,
+    CustomerID INT,
+    EmployeeID INT,
+    StoreID INT,
+    Status VARCHAR(10),
+    Updated_at DATE 
+);
+
+CREATE or replace TABLE Products (
+    ProductID INT PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL,
+    Category VARCHAR(100),
+    RetailPrice DECIMAL(10,2) NOT NULL,
+    SupplierPrice DECIMAL(10,2),
+    SupplierID INT,
+    Updated_at timestamp,
+    orders_OrderID INT,
+    stores_StoreID INT
+    
+);
+
+CREATE or replace TABLE Stores (
+    StoreID INT PRIMARY KEY,
+    StoreName VARCHAR(100) NOT NULL,
+    Address VARCHAR(200),
+    City VARCHAR(50),
+    State VARCHAR(50),
+    ZipCode VARCHAR(10),
+    Email VARCHAR(200),
+    Phone VARCHAR(50),
+    Updated_at timestamp,
+    dates_Date timestamp
+);
+
+CREATE or replace TABLE Dates (
+    Slno int,
+    Date DATE PRIMARY KEY,
+    Day VARCHAR(3) NOT NULL,
+    Month VARCHAR(10) NOT NULL,
+    Year VARCHAR(4) NOT NULL,
+    Quarter INT NOT NULL,
+    DayOfWeek VARCHAR(10) NOT NULL,
+    WeekOfYear INT NOT NULL,
+    Updated_at DATE DEFAULT CURRENT_DATE
+);
+
+CREATE or replace TABLE Customer (
+    CustomerID VARCHAR PRIMARY KEY,
+    FirstName VARCHAR(50) NOT NULL,
+    LastName VARCHAR(50) NOT NULL,
+    Email VARCHAR(100),
+    Phone VARCHAR(100),
+    Address VARCHAR(100),
+    City VARCHAR(50),
+    State VARCHAR(2),
+    ZipCode VARCHAR(10),
+    Updated_at timestamp , 
+    orderitems_OrderItemID INT,
+    stores_StoreID INT
+    
+);
+
+CREATE or replace TABLE OrderItems (
+    OrderItemID INT PRIMARY KEY,
+    OrderID INT NOT NULL,
+    ProductID INT NOT NULL,
+    Quantity INT NOT NULL,
+    UnitPrice DECIMAL(10,2) NOT NULL,
+    Updated_at timestamp,
+    employees_EmployeeID INT
+    
+);
+
+CREATE or replace  TABLE Employees (
+    EmployeeID INT PRIMARY KEY,
+    FirstName VARCHAR(100) NOT NULL,
+    LastName VARCHAR(100) NOT NULL,
+    Email VARCHAR(200),
+    JobTitle VARCHAR(100),
+    HireDate timestamp,
+    ManagerID INT,
+    Address VARCHAR(200),
+    City VARCHAR(50),
+    State VARCHAR(50),
+    ZipCode VARCHAR(10),
+    Updated_at timestamp
+);
+
+create or replace storage integration s3_int_pipe
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = S3
+  ENABLED = TRUE 
+  STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::026090512481:role/bpr_project_incremental'
+  STORAGE_ALLOWED_LOCATIONS = ('s3://data-load-project/')
+   COMMENT = 'This is to practice pipe concept'
+
+   DESC integration s3_int_pipe;
+
+   CREATE OR REPLACE file format csv_fileformat
+    type = csv
+    field_delimiter = ','
+    skip_header = 1
+    null_if = ('NULL','null')
+    empty_field_as_null = TRUE;
+
+    CREATE OR REPLACE stage incremental_load_project
+    URL = 's3://data-load-project/'
+    STORAGE_INTEGRATION = s3_int_pipe
+    FILE_FORMAT =csv_fileformat 
+
+    LIST @incremental_load_project
+
+1) CREATE OR REPLACE pipe supplier_pipe
+   auto_ingest = TRUE
+   AS
+   COPY INTO supplier
+   FROM @incremental_load_project
+   pattern='.*suppliers.*'
+
+desc pipe supplier_pipe;
+
+select * from supplier;
+
+alter pipe supplier_pipe refresh;
+
+select system$pipe_status('supplier_pipe')
+
+2) CREATE OR REPLACE pipe orders_pipe
+   auto_ingest = TRUE
+   AS
+   COPY INTO orders
+   FROM @incremental_load_project
+   pattern='.*orders.*'
+
+ alter pipe orders_pipe refresh;
+
+ select system$pipe_status ('orders_pipe')
+
+ alter pipe orders_pipe set pipe_execution_paused=true
+
+ alter pipe orders_pipe set pipe_execution_paused=true
+
+ select * from orders;
+
+  desc pipe orders_pipe;
+
+3) CREATE OR REPLACE pipe products_pipe
+   auto_ingest = TRUE
+   AS
+   COPY INTO products
+   FROM @incremental_load_project
+   pattern='.*products.*'
+
+   alter pipe products_pipe refresh;
+
+   select * from products;
+
+   desc pipe products_pipe;
+
+4) CREATE OR REPLACE pipe stores_pipe
+   auto_ingest = TRUE
+   AS
+   COPY INTO stores
+   FROM @incremental_load_project
+   pattern='.*stores.*'
+
+   select * from stores;
+
+   alter pipe stores_pipe refresh;
+
+   desc pipe stores_pipe;
+
+5) CREATE OR REPLACE pipe dates_pipe
+   auto_ingest = TRUE
+   AS
+   COPY INTO dates
+   FROM @incremental_load_project
+   pattern='.*dates.*'
+
+   select * from dates;
+
+   alter pipe dates_pipe refresh;
+
+   desc pipe dates_pipe;
+   
+   
+6) CREATE OR REPLACE pipe customers_pipe
+   auto_ingest = TRUE
+   AS
+   COPY INTO customer
+   FROM @incremental_load_project
+   pattern='.*customers.*'
+
+   alter pipe customers_pipe refresh;
+
+   select * from customer;
+
+   desc pipe customers_pipe;
+
+7) CREATE OR REPLACE pipe orderitems_pipe
+   auto_ingest = TRUE
+   AS
+   COPY INTO orderitems
+   FROM @incremental_load_project
+   pattern='.*orderitems.*'
+
+   alter pipe orderitems_pipe refresh;
+
+   select * from orderitems;
+
+   desc pipe orderitems_pipe;
+
+8) CREATE OR REPLACE pipe employees_pipe
+   auto_ingest = TRUE
+   AS
+   COPY INTO employees
+   FROM @incremental_load_project
+   pattern='.*employees.*'
+
+   alter pipe employees_pipe refresh;
+
+   select * from employees; 
+
+   desc pipe employees_pipe;
+
+
+
+select * from customer
+
+   select concat('1',customerid) from customer 
+
+   update customer 
+      set customerid = concat('1',customerid)
+

@@ -1,0 +1,27 @@
+use demo_db;
+
+select * from DEMO_DB.PUBLIC.EMPLOYEES where manager_id=103;
+
+select count(*) from SNOWFLAKE_SAMPLE_DATA.TPCDS_SF100TCL.CUSTOMER;
+
+select * from SNOWFLAKE_SAMPLE_DATA.TPCDS_SF100TCL.CUSTOMER;
+
+select * from SNOWFLAKE_SAMPLE_DATA.TPCDS_SF100TCL.CUSTOMER where C_SALUTATION='Mrs.';
+
+alter table SNOWFLAKE_SAMPLE_DATA.TPCDS_SF100TCL.CUSTOMER cluster by (C_SALUTATION);
+
+create or replace  table customer_copy as (
+select * from SNOWFLAKE_SAMPLE_DATA.TPCDS_SF100TCL.CUSTOMER);
+
+select * from customer_copy;
+
+select * from customer_copy where C_SALUTATION='Mr.';
+
+alter table customer_copy cluster by (C_SALUTATION);
+
+
+select * from employees
+
+select min(salary),manager_id from employees group by manager_id;
+
+select * from employees order by manager_id ;
